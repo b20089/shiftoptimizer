@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.springframework.org/schema/security">
+
+<head>
+  <meta charset="utf-8">
+  <title>自動シフト割り当てシステム</title>
+</head>
+
+<body>
+  <!-- <a class="back" th:href="@{/back(userid=${user.id})}">もどる</a><br> -->
+  <a th:href="@{/back}">もどる</a><br>
+
+  <h1>最適化されたシフト一覧</h1>
+  <table border="2">
+    <thead>
+      <tr>
+        <th>ShiftID</th>
+        <th>従業員名</th>
+        <th>日付</th>
+        <th>部門</th>
+        <th>EmployeeID</th>
+        <th>勤務時間</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="shift : ${optimizedShifts}">
+        <td th:text="${shift.shiftID}"></td>
+        <td th:text="${employeeNames[shift.employeeID]}"></td>
+        <td th:text="${shift.shiftDate}"></td>
+        <td th:text="${shift.shiftType}"></td>
+        <td th:text="${shift.employeeID}"></td>
+        <td th:text="${shift.workingHours}"></td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+
+</html>

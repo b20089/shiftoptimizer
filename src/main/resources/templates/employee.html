@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.springframework.org/schema/security">
+
+<head>
+  <meta charset="utf-8">
+  <title>従業員</title>
+</head>
+
+<body>
+  <!-- <a class="back" th:href="@{/back(userid=${user.id})}">もどる</a><br> -->
+  <a th:href="@{/back}">もどる</a><br>
+  <h1>従業員一覧</h1>
+  <table border="2">
+    <thead>
+      <tr>
+        <th>EmployeeID</th>
+        <th>名前</th>
+        <th>熟練度</th>
+        <th>給料</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="employee : ${employees}">
+        <td th:text="${employee.employeeID}"></td>
+        <td th:text="${employee.name}"></td>
+        <td th:text="${employee.skillLevel}"></td>
+        <td th:text="${employee.salary}"></td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+
+</html>

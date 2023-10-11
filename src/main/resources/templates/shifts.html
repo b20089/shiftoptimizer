@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.springframework.org/schema/security">
+
+<head>
+  <meta charset="utf-8">
+  <title>シフト</title>
+  <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body>
+  <a th:href="@{/logout}">ログアウト</a><br>
+  <!--シフト希望一覧は店長のみが閲覧可にしたい
+      シフト希望一覧⇒/requestsに最適化シフト生成ボタン⇒シフト確認で生成された最適化シフトが全員確認できる-->
+
+  <div>
+    <a href="/list">従業員一覧</a>
+    <a href="/requests">シフト希望一覧</a>
+    <a href="/optimized">シフト確認</a>
+  </div>
+</body>
+
+</html>

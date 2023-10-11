@@ -1,0 +1,71 @@
+-- Employees（従業員）テーブルへのダミーデータ挿入
+INSERT INTO Employees (Name, SkillLevel, Salary) VALUES
+('田中 太郎', 3, 1024.00),
+('山本 佳子', 2, 1024.00),
+('鈴木 健太', 1, 1024.00),
+('伊藤 美紀', 2, 1024.00),
+('佐藤 裕子', 3, 1024.00),
+('小林 健一', 2, 1024.00),
+('高橋 明子', 1, 1024.00),
+('渡辺 勇太', 2, 1024.00),
+('中村 美和', 3, 1024.00),
+('斎藤 勝也', 1, 1024.00);
+
+/*
+INSERT INTO ShiftRequests (EmployeeID, ShiftDate, ShiftType, OtherRequestDetails) VALUES
+(1, '2023-09-01', 1, '7-9'),
+(2, '2023-09-01', 2, '10-12'),
+(3, '2023-09-01', 3, '12-14'),
+(4, '2023-09-01', 4, '15-17'),
+(5, '2023-09-01', 5, '19-21'),
+(6, '2023-09-02', 1, '6-9'),
+(7, '2023-09-02', 2, '10-13'),
+(8, '2023-09-02', 3, '12-15'),
+(9, '2023-09-02', 4, '16-18'),
+(10, '2023-09-02', 5, '18-21');*/
+
+-- ShiftRequests（シフト要求）テーブルへのダミーデータ挿入
+-- 1か月分のデータを挿入
+INSERT INTO ShiftRequests (EmployeeID, ShiftDate, ShiftType, OtherRequestDetails)
+SELECT
+    FLOOR(1 + RAND() * 10), -- EmployeeIDをランダムに選択 (1から10の間)
+    --DATE_ADD('2023-09-01', INTERVAL FLOOR(RAND() * 30) DAY), -- ランダムな日付を生成
+    DATEADD(DAY, FLOOR(RAND() * 30), '2023-09-01'),
+    FLOOR(1 + RAND() * 5), -- ShiftTypeをランダムに選択 (1から5の間)
+    CONCAT(FLOOR(RAND() * 24), '-', FLOOR(RAND() * 24)) -- 働ける時間帯をランダムに生成
+FROM(SELECT 1 AS n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5
+    UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) AS numbers
+    CROSS JOIN
+    (SELECT 1 AS m UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5
+    UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) AS months
+    ;
+
+
+/*
+-- OptimizedShift（最適化されたシフト）テーブルへのダミーデータ挿入
+INSERT INTO OptimizedShift (ShiftDate, ShiftType, EmployeeID) VALUES
+('2023-09-01', 1, 1),
+('2023-09-01', 2, 2),
+('2023-09-01', 3, 3),
+('2023-09-01', 4, 4),
+('2023-09-01', 5, 5),
+('2023-09-02', 1, 6),
+('2023-09-02', 2, 7),
+('2023-09-02', 3, 8),
+('2023-09-02', 4, 9),
+('2023-09-02', 5, 10),
+-- 以下、1か月分のデータを続けて挿入
+-- ...
+;
+*/
+
+-- OptimizedShift（最適化されたシフト）テーブルへのダミーデータ挿入
+-- ShiftRequestsに対応するデータを生成
+--だみーなので，今はShiftRequetsをコピーしただけの物を挿入
+INSERT INTO OptimizedShift (ShiftDate, ShiftType, EmployeeID, WorkingHours)
+SELECT
+    sr.ShiftDate,
+    sr.ShiftType,
+    sr.EmployeeID,
+    sr.OtherRequestDetails
+FROM ShiftRequests sr;
