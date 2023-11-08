@@ -12,6 +12,8 @@ CREATE TABLE ShiftRequests (
     EmployeeID BIGINT,
     ShiftDate DATE NOT NULL,
     ShiftType INT NOT NULL,
+    StartTime TIME,
+    EndTime TIME,
     OtherRequestDetails VARCHAR(255),
     FOREIGN KEY (EmployeeID) REFERENCES Employees(EmployeeID)
 );
@@ -22,6 +24,8 @@ CREATE TABLE OptimizedShift (
     ShiftDate DATE NOT NULL,
     ShiftType INT NOT NULL,
     EmployeeID BIGINT,
-    WorkingHours VARCHAR(255),
+    --WorkingHours VARCHAR(255),
+    StartTime TIME,
+    EndTime TIME,
     FOREIGN KEY (EmployeeID) REFERENCES Employees(EmployeeID)
 );

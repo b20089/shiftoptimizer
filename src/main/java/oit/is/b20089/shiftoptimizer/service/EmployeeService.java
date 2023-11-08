@@ -1,7 +1,12 @@
 package oit.is.b20089.shiftoptimizer.service;
 
 import java.io.IOException;
+import java.sql.Date;
 import java.util.concurrent.TimeUnit;
+
+import javax.xml.crypto.Data;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -30,5 +35,15 @@ public class EmployeeService {
   public String getEmployeeNameByID(Long employeeID) {
     Employee employee = employeeMapper.getEmployeeById(employeeID);
     return (employee != null) ? employee.getName() : "Unknown"; // 名前がない場合のデフォルト値
+  }
+
+
+  public List<String> getNameByDate(Date shiftDate) {
+    List<Employee> employees = employeeMapper.getNameByDate(shiftDate);
+    List<String> names = new ArrayList<>();
+    for (Employee e : employees) {
+      names.add(e.getName());
+    }
+    return names;
   }
 }

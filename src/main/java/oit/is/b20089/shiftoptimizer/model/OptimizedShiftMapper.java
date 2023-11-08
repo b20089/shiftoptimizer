@@ -2,6 +2,7 @@ package oit.is.b20089.shiftoptimizer.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Date;
 
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -14,4 +15,11 @@ import org.apache.ibatis.annotations.Delete;
 public interface OptimizedShiftMapper {
   @Select("SELECT * FROM OptimizedShift")
   List<OptimizedShift> getAllOptimizedShifts();
+
+  @Select("SELECT DISTINCT shiftDate FROM OptimizedShift order by shiftDate")
+  List<Date> getUniqueDates();
+
+  @Select("SELECT * FROM OPTIMIZEDSHIFT where employeeid = #{employeeID} order by shiftdate")
+  List<OptimizedShift> getShiftByEmployeeID(int employeeID);
+
 }
