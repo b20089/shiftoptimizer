@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
+import java.sql.Date;
 import oit.is.b20089.shiftoptimizer.model.Employee;
 import oit.is.b20089.shiftoptimizer.model.EmployeeMapper;
 import oit.is.b20089.shiftoptimizer.model.ShiftRequest;
@@ -26,4 +26,13 @@ public class OptimizedShiftService {
   public List<OptimizedShift> getAllOptimizedShifts() {
     return optimizedShiftMapper.getAllOptimizedShifts();
   }
+
+  public List<Date> getUniqueDates() {
+    return optimizedShiftMapper.getUniqueDates();
+  }
+
+  public List<OptimizedShift> getShiftByEmployeeID(int employeeID) {
+    return optimizedShiftMapper.getShiftByEmployeeID(employeeID);
+  }
+
 }

@@ -1,12 +1,15 @@
 package oit.is.b20089.shiftoptimizer.model;
 
-import java.sql.Date;
+import java.sql.*;
 
 public class ShiftRequest extends Shift{
   private Long requestID;
   private Long employeeID;
   private Date shiftDate;
   private int shiftType;
+  private Time startTime;
+  private Time endTime;
+
   private String otherRequestDetails;
   // Getters and setters
 
@@ -44,6 +47,22 @@ public class ShiftRequest extends Shift{
 
   public String getOtherRequestDetails() {
     return otherRequestDetails;
+  }
+
+  public Time getStartTime() {
+    return startTime;
+  }
+
+  public void setStartTime(Time startTime) {
+    this.startTime = startTime;
+  }
+
+  public Time getEndTime() {
+    return endTime;
+  }
+
+  public void setEndTime(Time endTime) {
+    this.endTime = endTime;
   }
 
   public void setOtherRequestDetails(String otherRequestDetails) {

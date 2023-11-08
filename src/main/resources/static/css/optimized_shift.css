@@ -1,0 +1,56 @@
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  max-width: 100%;
+  position: relative;
+  height: 750px;
+  /* 必要な高さに調整してください */
+}
+
+
+.shiftTable {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 4500px;
+  height: 750px;
+  min-width: 100%;
+  /* スクロールバーの幅をカバー */
+}
+
+.shiftTable th,
+.shiftTable td {
+  border: 1px solid #CCCCCC;
+  padding: 5px 10px;
+  text-align: center;
+
+}
+
+.shiftTable th {
+  background-color: cornsilk;
+
+}
+
+._sticky {
+  position: sticky;
+  left: 0;
+  background: cornsilk;
+  /* 従業員名のセルの背景色 */
+}
+
+._sticky:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+
+#border_right {
+  border-right: 2px solid #000;
+}
+
+#border_bottom {
+  border-bottom: 2px solid #000;
+}
