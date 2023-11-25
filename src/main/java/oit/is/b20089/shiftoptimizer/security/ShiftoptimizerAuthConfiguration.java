@@ -1,6 +1,7 @@
 package oit.is.b20089.shiftoptimizer.security;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -10,6 +11,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @EnableWebSecurity
 public class ShiftoptimizerAuthConfiguration {
@@ -35,14 +39,14 @@ public class ShiftoptimizerAuthConfiguration {
         .roles("USER", "MANAGER")
         .build();
     UserDetails user2 = users
-        .username("user2")
+        .username("店長")
         .password("$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e")
-        .roles("USER")
+        .roles("MANAGER")
         .build();
     UserDetails user3 = users
-        .username("user3")
+        .username("従業員")
         .password("$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e")
-        .roles("USER")
+        .roles("EMPLOYEE")
         .build();
     // $ sshrun htpasswd -nbBC 10 customer1 p@ss
     UserDetails user4 = users
@@ -121,6 +125,21 @@ public class ShiftoptimizerAuthConfiguration {
   @Bean
   PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
+  }
+
+  @Configuration
+  public class CorsConfig {
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+      return new WebMvcConfigurer() {
+        @Override
+        public void addCorsMappings(CorsRegistry registry) {
+          registry.addMapping("/api/**")
+              .allowedOrigins("http://localhost:80")
+              .allowedMethods("GET", "POST", "PUT", "DELETE");
+        }
+      };
+    }
   }
 
 }
