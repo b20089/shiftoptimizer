@@ -11,7 +11,7 @@ CREATE TABLE ShiftRequests (
     RequestID BIGINT PRIMARY KEY AUTO_INCREMENT,
     EmployeeID BIGINT,
     ShiftDate DATE NOT NULL,
-    ShiftType INT NOT NULL,
+    ShiftType INT,
     StartTime TIME,
     EndTime TIME,
     OtherRequestDetails VARCHAR(255),
@@ -22,7 +22,7 @@ CREATE TABLE ShiftRequests (
 CREATE TABLE OptimizedShift (
     ShiftID BIGINT PRIMARY KEY AUTO_INCREMENT,
     ShiftDate DATE NOT NULL,
-    ShiftType INT NOT NULL,
+    ShiftType INT,
     EmployeeID BIGINT,
     --WorkingHours VARCHAR(255),
     StartTime TIME,

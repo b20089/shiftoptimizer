@@ -4,79 +4,243 @@
 <head>
   <meta charset="utf-8">
   <title>自動シフト割り当てシステム</title>
-
+  <script src="js/optimizedShiftAdd.js"></script>
+  <link rel="stylesheet" href="css/buttonIcon.css">
+  <link rel="stylesheet" href="css/buttonIcon2.css">
   <link rel="stylesheet" href="css/optimized_shift.css">
+  <link rel="stylesheet" href="css/Outline.css">
 </head>
 
 <body>
   <!-- <a class="back" th:href="@{/back(userid=${user.id})}">もどる</a><br> -->
-  <a th:href="@{/back}">もどる</a><br>
+  <a th:href="@{/back}" class="buttonIcon" aria-label="お問い合わせ">もどる</a><br>
 
   <h1>最適化されたシフト一覧</h1>
-  <!-- <div>
-    <table border="2">
-      <thead>
-        <tr>
-          <th>従業員</th>
-          <th th:each="date : ${dates}"><span th:text="${date}"></span></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr th:each="employee : ${employees}">
-          <td th:text="${employee}"></td>
-          <td th:each="date : ${dates}">
-            <-- 勤務時間がnullの場合は空白セルにする --
-          <td th:if="${shifts[employee][date] != null}" th:text="${shifts[employee][date]}"></td>
-          <td th:unless="${shifts[employee][date] != null}">&nbsp;</td>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div> -->
-
-  <!-- <div>
-    <table border="2">
-      <thead>
-        <tr>
-          <th>従業員</th>
-          <th th:each="date : ${shiftdate}">
-            <span th:text="${date}"></span>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr th:each="employeeShifts, empIndex : ${employeeShifts}">
-          <td th:text="${employees[empIndex.index].name}"></td>
-          <th:block th:each="shiftsForDate, dateIndex : ${employeeShifts}">
-            <td th:each="shift : ${shiftsForDate}">
-              <th:block th:if="${shift != null}">
-                <span th:text="${shift.workingHours}"></span>
-              </th:block>
-            </td>
-            <th:block th:unless="${shiftsForDate}">
-              <td>休</td>
-            </th:block>
-          </th:block>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</body> -->
 
   <div id="table-container"></div>
   <script th:inline="javascript">
     var tableData = /*[[${tableData}]]*/[];
     var shiftDates = /*[[${shiftdate}]]*/[];
     var employees = /*[[${employees}]]*/[];
+    var userIsManager = /*[[${#authorization.expression('hasRole(''MANAGER'')') ? true : false}]]*/false;
 
+  // SSEを開始する関数
+  function startSse() {
+    var eventSource = new EventSource("/sse");
+
+    eventSource.onmessage = function (event) {
+      var eventData = JSON.parse(event.data);
+      if (eventData.name === "update") {
+        // データが更新された場合の処理
+        updateView(eventData.data);
+      }
+    };
+
+    eventSource.onerror = function (error) {
+      console.error("SSE Error:", error);
+      eventSource.close();
+    };
+  }
+
+  // ビューを更新する関数
+    function updateView(data) {
+      // データの変更に基づいたビューの更新処理
+      document.getElementById("table-container").innerHTML = renderTable(tableData, shiftDates, employees);
+
+
+    }
 
     function formatDate(dateString) {
       var date = new Date(dateString);
       return (date.getMonth() + 1) + "/" + date.getDate(); // 月と日のみを取得
     }
 
+    // シフトを保存する処理
+    function saveShift() {
+      var employeeName = document.getElementById('employeeName').value;
+      var employeeID = document.getElementById('employeeID').value;
+      var shiftDate = document.getElementById('shiftDate').value;
+      var startTime = document.getElementById('startTime').value;
+      var endTime = document.getElementById('endTime').value;
+
+      // 入力が正しいか確認（必要に応じて追加のバリデーションを行う）
+
+      // クライアントからサーバーにシフトを追加するイベントを送信
+      var eventData = {
+        employeeName: employeeName,
+        employeeID: employeeID,
+        shiftDate: shiftDate,
+        startTime: startTime,
+        endTime: endTime
+      };
+
+      fetch("/shifts/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(eventData)
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("Failed to add shift");
+          }
+          console.log("Shift added successfully");
+        })
+        .catch(error => {
+          console.error("Error adding shift:", error);
+          // エラーが発生した場合に適切なエラーハンドリングを行う
+        });
+    }
+
+    // シフトを追加するポップアップを表示する
+    function openAddPopup() {
+      // ポップアップの内容を作成
+      var popupContent = "<label for='employeeName'>従業員名:</label>";
+      popupContent += "<input type='text' id='employeeName' name='employeeName'><br>";
+
+      popupContent += "<label for='employeeID'>従業員ID:</label>";
+      popupContent += "<input type='text' id='employeeID' name='employeeID'><br>";
+
+      popupContent += "<label for='shiftDate'>シフトの日付:</label>";
+      popupContent += "<input type='date' id='shiftDate' name='shiftDate'><br>";
+
+      popupContent += "<label for='startTime'>開始時間:</label>";
+      popupContent += "<input type='time' id='startTime' name='startTime'><br>";
+
+      popupContent += "<label for='endTime'>終了時間:</label>";
+      popupContent += "<input type='time' id='endTime' name='endTime'><br>";
+
+      popupContent += "<button onclick='saveShift()'>保存</button>";
+
+      // ポップアップを表示
+      var addPopup = window.open("", "Add Shift", "width=400, height=400");
+      addPopup.document.body.innerHTML = popupContent;
+    }
+
+    // シフトが変更されたときの処理
+    function onShiftChange(employeeID, date, startTime, endTime) {
+      // クライアントからサーバーにイベントを送信
+      var eventData = {
+        employeeID: employeeID,
+        date: date,
+        startTime: startTime,
+        endTime: endTime
+      };
+
+      fetch("/shifts/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(eventData)
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("Failed to update shift");
+          }
+          console.log("Shift updated successfully");
+        })
+        .catch(error => {
+          console.error("Error updating shift:", error);
+          // エラーが発生した場合に適切なエラーハンドリングを行う
+        });
+    }
+
+    function onShiftDelete(employeeID, date) {
+      var eventData = {
+        employeeID: employeeID,
+        date: date
+      };
+
+      fetch("/shifts/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(eventData)
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("Failed to delete shift");
+          }
+          console.log("Shift delete successfully");
+        })
+        .catch(error => {
+          console.error("Error delete shift:", error);
+          // エラーが発生した場合に適切なエラーハンドリングを行う
+        });
+    }
+
+    // シフトを追加するポップアップを表示する
+    function openAddPopup2() {
+      var employeeName = window.prompt("従業員名を入力してください:");
+      var employeeID = window.prompt("従業員IDを入力してください:");
+      var shiftDate = window.prompt("シフトの日付を入力してください (YYYY-MM-DD):");
+      var startTime = window.prompt("開始時間を入力してください (HH:mm):");
+      var endTime = window.prompt("終了時間を入力してください (HH:mm):");
+
+      // 入力がキャンセルされた場合は何もしない
+      if (!employeeName || !employeeID || !shiftDate || !startTime || !endTime) {
+        return;
+      }
+
+      // クライアントからサーバーにシフトを追加するイベントを送信
+      var eventData = {
+        employeeName: employeeName,
+        employeeID: employeeID,
+        shiftDate: shiftDate,
+        startTime: startTime,
+        endTime: endTime
+      };
+
+      fetch("/shifts/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(eventData)
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("Failed to add shift");
+          }
+          console.log("Shift added successfully");
+          // 追加が成功した場合、ポップアップを閉じるなどの処理を行う
+        })
+        .catch(error => {
+          console.error("Error adding shift:", error);
+          // エラーが発生した場合に適切なエラーハンドリングを行う
+        });
+    }
+
+    function openEditPopup(employeeID, date) {
+      // 編集ポップアップを表示する処理を実装
+      // ポップアップにはシフトの編集フォームが含まれる
+      var startTime = prompt("開始時間を入力してください（HH:mm）", "");
+      var endTime = prompt("終了時間を入力してください（HH:mm）", "");
+
+
+      // 入力がキャンセルされた場合は何もしない
+      if (startTime === null || endTime === null) {
+        return;
+      }
+      onShiftChange(employeeID, date, startTime, endTime);
+    }
+
+    function openDeletePopup(employeeID, date) {
+      prompt("削除しますか？", "");
+
+      onShiftDelete(employeeID, date);
+    }
+
     function renderTable(data, dates, employeeData) {
-      var table = "<<div class=\"table-container\"><table border='2' class=\"shiftTable\">";
+      var table = "<div>"
+      if (userIsManager) {
+        table += "<button class=\"buttonOutline\" onclick=\"openAddPopup()\">シフトを追加1</button><button class=\"buttonOutline\" onclick=\"openAddPopup2()\">シフトを追加2</button>"
+      }
+      table += "</div>"
+      table += "<div class=\"table-container\"><table border='2' class=\"shiftTable\">";
       table += "<thead><tr id=\"border_bottom\"><th id=\"border_right\">従業員</th>";
       for (var i = 0; i < dates.length; i++) {
         table += "<th>" + formatDate(dates[i]) + "</th>";
@@ -86,13 +250,25 @@
       for (var i = 0; i < employeeData.length; i++) {
         table += "<tr id=\"border_bottom\">";
         for (var j = 0; j < data[i].length; j++) {
-          if (j == 0)
-            table += "<td class=\"_sticky\" id=\"border_right\">" + data[i][j] + "</td>";
-          else
-            table += "<td>" + data[i][j] + "</td>";
+          if (j == 0) {
+            if (userIsManager)
+              table += "<td class=\"_sticky\" id=\"border_right\">" + data[i][j] + "</td>";
+            else
+              table += "<td class=\"_sticky\" id=\"border_right\">" + data[i][j] + "</td>";
+          }
+          else {
+            if (userIsManager && data[i][j].trim()) {
+              var employeeName = data[i][0];
+              var date = shiftDates[j - 1]; // ヘッダーが一つ目に従業員名なので、日付は j - 1 となります
+              table += "<td>" + data[i][j] + "<button class=\"buttonIcon3\" onclick=\"openEditPopup('" + (i + 1) + "', '" + date + "')\">" + " 編集</button><button class=\"buttonIcon2\" onclick=\"openDeletePopup('" + (i + 1) + "', '" + date + "')\">" + " 削除</button></td>";
+            } else {
+              table += "<td>" + data[i][j] + "</td>";
+            }
+          }
         }
         table += "</tr>";
       }
+
 
       table += "</tbody></table><div>";
       return table;
@@ -100,5 +276,6 @@
 
     document.getElementById("table-container").innerHTML = renderTable(tableData, shiftDates, employees);
   </script>
+
 
 </html>
