@@ -30,7 +30,6 @@ public class SseController {
   }
 
   public void sendUpdateEvent(Object eventData) {
-    System.out.println("うんこ");
     emitters.forEach(emitter -> {
       try {
         emitter.send(SseEmitter.event().name("update").data(eventData));

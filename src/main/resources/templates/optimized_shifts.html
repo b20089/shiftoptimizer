@@ -292,7 +292,6 @@
       console.log("sse.onmessage")
       console.log(event.data);
       if (event.data == 1) {
-        console.log("hanakuso");
         window.location.reload(true);
         document.getElementById("table-container").innerHTML = renderTable(tableData, shiftDates, employees);
       }
