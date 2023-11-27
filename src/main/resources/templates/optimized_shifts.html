@@ -289,7 +289,7 @@
     document.getElementById("table-container").innerHTML = renderTable(tableData, shiftDates, employees);
     var sse = new EventSource('/asyncUpdate');
     sse.onmessage = function (event) {
-      console.log("sse.onmessage")
+      console.log("sse.onmessage!")
       console.log(event.data);
       if (event.data == 1) {
         window.location.reload(true);
