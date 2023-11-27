@@ -2,6 +2,7 @@ package oit.is.b20089.shiftoptimizer.service;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -26,6 +27,10 @@ import oit.is.b20089.shiftoptimizer.model.ShiftDeleteRequest;
 
 @Service
 public class OptimizedShiftService {
+
+  boolean dbUpdated = false;
+  private final Logger logger = LoggerFactory.getLogger(OptimizedShiftService.class);
+
   @Autowired
   private OptimizedShiftMapper optimizedShiftMapper;
 
@@ -42,7 +47,7 @@ public class OptimizedShiftService {
   }
 
   public void updateShift(ShiftUpdateData shiftUpdateData) {
-    System.out.println("\nservice\n");
+    System.out.println("\nupdating..........\n");
     System.out.println(shiftUpdateData.getStartTime());
     System.out.println(shiftUpdateData.getEndTime());
     System.out.println(shiftUpdateData.getEmployeeID());
@@ -51,15 +56,51 @@ public class OptimizedShiftService {
     // java.util.Date utilDate = s.parse(shiftUpdateData.getShiftDate());
     // java.sql.Date shiftDate = new Date(utilDate.getTime());
     optimizedShiftMapper.updateByemployeeId(shiftUpdateData);
+    // 非同期でDB更新したことを共有する際に利用する
+    this.dbUpdated = true;
+  }
+
+  /**
+   * dbUpdatedがtrueのときのみブラウザにDBからフルーツリストを取得して送付する
+   *
+   * @param emitter
+   */
+  @Async
+  public void asyncUpdate(SseEmitter emitter) {
+    dbUpdated = true;
+    try {
+      while (true) {// 無限ループ
+        // DBが更新されていなければ0.5s休み
+        if (false == dbUpdated) {
+          TimeUnit.MILLISECONDS.sleep(500);
+          continue;
+        }
+        // DBが更新されていれば更新後のフルーツリストを取得してsendし，1s休み，dbUpdatedをfalseにする
+
+        emitter.send(1);
+        TimeUnit.MILLISECONDS.sleep(1000);
+        dbUpdated = false;
+      }
+    } catch (Exception e) {
+      // 例外の名前とメッセージだけ表示する
+      logger.warn("Exception:" + e.getClass().getName() + ":" + e.getMessage());
+    } finally {
+      emitter.complete();
+    }
+    System.out.println("asyncUpdate complete");
   }
 
   public void insertOptimizedShift(ShiftAddRequest shiftAddRequest) {
-
+    System.out.println("\nupdating..........\n");
+    // 非同期でDB更新したことを共有する際に利用する
+    this.dbUpdated = true;
     optimizedShiftMapper.insertOptimizedShift(shiftAddRequest);
   }
 
   public void deleteOptimizedShift(ShiftDeleteRequest shiftDeleteRequest) {
-
+    System.out.println("\nupdating..........\n");
+    // 非同期でDB更新したことを共有する際に利用する
+    this.dbUpdated = true;
     optimizedShiftMapper.deleteOptimizedShift(shiftDeleteRequest);
   }
 }

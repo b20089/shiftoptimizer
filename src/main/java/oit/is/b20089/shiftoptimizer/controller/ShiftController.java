@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.apache.ibatis.jdbc.Null;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import oit.is.b20089.shiftoptimizer.controller.SseController;
 import oit.is.b20089.shiftoptimizer.model.Employee;
 import oit.is.b20089.shiftoptimizer.model.EmployeeMapper;
 import oit.is.b20089.shiftoptimizer.model.ShiftRequest;
@@ -51,6 +53,7 @@ public class ShiftController {
 
   private final SseController sseController;
 
+  @Autowired
   public ShiftController(SseController sseController) {
     this.sseController = sseController;
   }
@@ -61,6 +64,13 @@ public class ShiftController {
   OptimizedShiftMapper optimizedShiftMapper;
   @Autowired
   EmployeeService employeeService;
+
+  @GetMapping("/api/get-shifts")
+  public List<OptimizedShift> getShifts() {
+    // 最新のシフトデータを取得
+    List<OptimizedShift> shifts = optimizedShiftService.getAllOptimizedShifts();
+    return shifts;
+  }
 
   private Map<Long, String> getEmployeeNames(List<? extends Shift> shifts) {
     Map<Long, String> employeeNames = new HashMap<>();
@@ -198,7 +208,9 @@ public class ShiftController {
       System.out.println(shiftUpdateData.getStartTime());
       System.out.println(shiftUpdateData.getEndTime());
       System.out.println(shiftUpdateData.getEmployeeID());
-      //  データ更新後SSEを使用してクライアントに通知
+      // データ更新後SSEを使用してクライアントに通知
+      System.out.println("はんどるしふとあぷでーと：");
+      System.out.println(eventData);
       sseController.sendUpdateEvent(eventData);
       // 更新が成功したことをクライアントに通知
       return ResponseEntity.ok("Shift updated successfully");
@@ -268,4 +280,16 @@ public class ShiftController {
     return "shifts.html";
   }
 
+
+  /**
+   * JavaScriptからEventSourceとして呼び出されるGETリクエスト SseEmitterを返すことで，PUSH型の通信を実現する
+   *
+   * @return
+   */
+  @GetMapping("asyncUpdate")
+  public SseEmitter sample59() {
+    final SseEmitter sseEmitter = new SseEmitter();
+    this.optimizedShiftService.asyncUpdate(sseEmitter);
+    return sseEmitter;
+  }
 }
