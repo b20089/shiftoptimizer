@@ -3,7 +3,9 @@
 
 <head>
   <meta charset="utf-8">
-  <title>自動シフト割り当てシステム</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>シフト希望入力フォーム面</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@3.10.2/dist/fullcalendar.min.css">
 </head>
 
 <body>
@@ -31,6 +33,33 @@
       </tr>
     </tbody>
   </table>
+  
+
+  <h2>シフト希望入力フォーム</h2>
+  <div id="calendar"></div>
+
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@3.10.2/dist/fullcalendar.min.js"></script>
+
+  <script>
+    $(document).ready(function () {
+      // FullCalendarの初期化
+      $('#calendar').fullCalendar({
+        header: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'month,agendaWeek,agendaDay'
+        },
+        selectable: true,
+        selectHelper: true,
+        select: function (start, end) {
+          // 選択した日付け範囲を取得し、ここで何かしらの処理を行う（例: フォームへの値の設定）
+          console.log('Selected: ' + start.format() + ' to ' + end.format());
+        }
+      });
+    });
+  </script>
 </body>
 
 </html>

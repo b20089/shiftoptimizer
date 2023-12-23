@@ -25,5 +25,8 @@ public interface EmployeeMapper {
   @Select("SELECT * FROM EMPLOYEES, OPTIMIZEDSHIFT  where EMPLOYEES .EMPLOYEEID  = OPTIMIZEDSHIFT .EMPLOYEEID  and SHIFTDATE = #{shiftDate} ORDER BY SHIFTDATE ")
   List<Employee> getNameByDate(Date shiftDate);
 
+  @Select("SELECT * FROM EMPLOYEES WHERE name = #{name}")
+  Employee getEmployeeByName(String name);
+
   // 他のクエリメソッド
 }

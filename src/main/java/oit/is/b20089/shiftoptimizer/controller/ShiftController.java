@@ -34,6 +34,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import oit.is.b20089.shiftoptimizer.controller.SseController;
 import oit.is.b20089.shiftoptimizer.model.Employee;
 import oit.is.b20089.shiftoptimizer.model.EmployeeMapper;
+import oit.is.b20089.shiftoptimizer.model.Log;
+import oit.is.b20089.shiftoptimizer.model.LogMapper;
 import oit.is.b20089.shiftoptimizer.model.ShiftRequest;
 import oit.is.b20089.shiftoptimizer.model.ShiftRequestMapper;
 import oit.is.b20089.shiftoptimizer.model.OptimizedShift;
@@ -64,6 +66,11 @@ public class ShiftController {
   OptimizedShiftMapper optimizedShiftMapper;
   @Autowired
   EmployeeService employeeService;
+  @Autowired
+  LogService logService;
+
+  @Autowired
+  LogMapper logMapper;
 
   @GetMapping("/api/get-shifts")
   public List<OptimizedShift> getShifts() {
@@ -178,6 +185,9 @@ public class ShiftController {
       tableData.add(rowData);// 従業員一人分の行をテーブルに追加する．
     }
 
+    List<Log> logs = logService.getAllLogs();
+    model.addAttribute("logs", logs);
+
     // var tableData = /*[[${tableData}]]*/[];
     // var shiftDates = /*[[${shiftdate}]]*/[];
     // var employees = /*[[${employees}]]*/[];
@@ -205,14 +215,22 @@ public class ShiftController {
 
       // 受信したデータを使ってデータベースを更新
       optimizedShiftService.updateShift(shiftUpdateData);
+      // ログに追加
+      Log log = new Log();
+      log.setMessage("Shift updated:" + employeeService.getEmployeeNameByID(shiftUpdateData.getEmployeeID()) + "さんの"
+          + shiftUpdateData.getDate() +
+          "の勤務時間が" + shiftUpdateData.getStartTime() + " - " + shiftUpdateData.getEndTime() + "に変更されました．");
+      log.setTimestamp(java.time.LocalDateTime.now());
+      logService.insertLog(log);
       System.out.println(shiftUpdateData.getStartTime());
       System.out.println(shiftUpdateData.getEndTime());
       System.out.println(shiftUpdateData.getEmployeeID());
       // データ更新後SSEを使用してクライアントに通知
-      System.out.println("はんどるしふとあぷでーと：");
+      System.out.println("handleShiftUpdate：");
       System.out.println(eventData);
-      sseController.sendUpdateEvent(eventData);
+      // sseController.sendUpdateEvent(eventData);
       // 更新が成功したことをクライアントに通知
+
       return ResponseEntity.ok("Shift updated successfully");
     } catch (Exception e) {
       // 更新が失敗したことをクライアントに通知
@@ -228,6 +246,14 @@ public class ShiftController {
     // shiftAddRequestから必要な情報を取り出し、データベースにシフトを追加する処理を行います
     System.out.println("Received shift addition request: " + shiftAddRequest.toString());
     optimizedShiftService.insertOptimizedShift(shiftAddRequest);
+    // ログに追加
+    Log log = new Log();
+    log.setMessage("Shift added:" + employeeService.getEmployeeNameByID(Long.parseLong(shiftAddRequest
+        .getEmployeeID())) + "さんのシフトが" + shiftAddRequest.getShiftDate() + "に"
+        + shiftAddRequest.getStartTime()
+        + " - " + shiftAddRequest.getEndTime() + "の勤務時間で追加されました．");
+    log.setTimestamp(java.time.LocalDateTime.now());
+    logService.insertLog(log);
     System.out.println(shiftAddRequest.getEmployeeID());
     System.out.println(shiftAddRequest.getStartTime());
     System.out.println(shiftAddRequest.getEndTime());
@@ -249,6 +275,13 @@ public class ShiftController {
     logger.debug("Employee ID: {}", shiftdeleteRequest.getEmployeeID());
     logger.debug("Shift Date: {}", shiftdeleteRequest.getDate());
     optimizedShiftService.deleteOptimizedShift(shiftdeleteRequest);
+    // ログに追加
+    Log log = new Log();
+    log.setMessage("Shift deleted:" + employeeService.getEmployeeNameByID(Long.parseLong(shiftdeleteRequest
+        .getEmployeeID())) + "さんの" + shiftdeleteRequest.getDate()
+        + "にあったシフトが削除されました．");
+    log.setTimestamp(java.time.LocalDateTime.now());
+    logService.insertLog(log);
     // 成功した場合はHTTPステータス200 OKを返す
     return ResponseEntity.ok("Shift delete successfully");
   }
@@ -280,16 +313,27 @@ public class ShiftController {
     return "shifts.html";
   }
 
-
   /**
    * JavaScriptからEventSourceとして呼び出されるGETリクエスト SseEmitterを返すことで，PUSH型の通信を実現する
    *
    * @return
    */
   @GetMapping("asyncUpdate")
-  public SseEmitter sample59() {
+  public SseEmitter sseUpdate() {
     final SseEmitter sseEmitter = new SseEmitter();
     this.optimizedShiftService.asyncUpdate(sseEmitter);
+    return sseEmitter;
+  }
+
+  /**
+   * JavaScriptからEventSourceとして呼び出されるGETリクエスト SseEmitterを返すことで，PUSH型の通信を実現する
+   *
+   * @return
+   */
+  @GetMapping("log")
+  public SseEmitter sseLog() {
+    final SseEmitter sseEmitter = new SseEmitter();
+    this.optimizedShiftService.asyncLog(sseEmitter);
     return sseEmitter;
   }
 }

@@ -46,4 +46,8 @@ public class EmployeeService {
     }
     return names;
   }
+
+  public Employee getEmployeeByName(String name) {
+    return employeeMapper.getEmployeeByName(name);
+  }
 }
