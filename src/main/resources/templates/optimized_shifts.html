@@ -9,21 +9,91 @@
   <link rel="stylesheet" href="css/buttonIcon2.css">
   <link rel="stylesheet" href="css/optimized_shift.css">
   <link rel="stylesheet" href="css/Outline.css">
+  <!-- FlatpickrのCDNを読み込む -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/flatpickr.min.js"></script>
+  <!-- flatpickrの日本語言語ファイルを読み込む -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/l10n/ja.min.js"></script>
 </head>
 
 <body>
   <!-- <a class="back" th:href="@{/back(userid=${user.id})}">もどる</a><br> -->
   <a th:href="@{/back}" class="buttonIcon" aria-label="お問い合わせ">もどる</a><br>
 
-  <h1>最適化されたシフト一覧</h1>
+  <h1>シフト一覧</h1>
+  <h4>シフト変更ログ</h4>
+  <div id="log-container" th:if="${logs}">
+    <div th:each="log:${logs}">
+      <tr>
+        <td>[[${log.message}]]</td>
+      </tr>
+    </div>
+  </div>
+
+
+  <button id="addShiftButton" class="buttonOutline" style="display: none;">シフトを追加</button>
+  <div id="shiftForm" style="display: none;">
+    <!-- 従業員名のプルダウン -->
+    <select id="employeeName">
+      <option th:each="employee : ${employees}" th:value="${employee.employeeID}" th:text="${employee.Name}">
+      </option>
+    </select>
+
+    <!-- Flatpickrを使用したカレンダー -->
+    <input type="text" id="shiftDate" class="flatpickr" placeholder="シフトの日付を選択してください">
+    <script>
+
+      flatpickr("#shiftDate", {
+        dateFormat: "Y-m-d",
+        enableTime: false, // タイムピッカーを無効にする場合は true を false に設定
+        locale: "ja", // 日本語に設定
+        defaultDate: "2023-09-01" // 初期位置を9月に設定
+      });
+    </script>
+
+    <!-- Flatpickrを使用した勤務開始時刻のプルダウン -->
+    <input type="text" id="startTime" placeholder="勤務開始時刻を選択してください">
+    <script>
+      flatpickr("#startTime", {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        defaultDate: "00:00",
+        time_24hr: true,
+        minuteIncrement: 1,
+      });
+    </script>
+
+    <!-- Flatpickrを使用した勤務終了時刻のプルダウン -->
+    <input type="text" id="endTime" placeholder="勤務終了時刻を選択してください">
+    <script>
+      flatpickr("#endTime", {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        defaultDate: "00:00",
+        time_24hr: true,
+        minuteIncrement: 1
+      });
+    </script>
+    <button class="buttonOutline" onclick="openAddPopup2()">確定</button>
+
+  </div>
+
 
   <div id="table-container"></div>
   <script th:inline="javascript">
     var tableData = /*[[${tableData}]]*/[];
     var shiftDates = /*[[${shiftdate}]]*/[];
     var employees = /*[[${employees}]]*/[];
+    var logs = /*[[${logs}]]*/[];
     var userIsManager = /*[[${#authorization.expression('hasRole(''MANAGER'')') ? true : false}]]*/false;
 
+    // 追加したログが表示されるたびに最下部までスクロール
+    function scrollToBottom() {
+      var logContainer = document.getElementById("log-container");
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
     // SSEを開始する関数
     function startSse() {
       var eventSource = new EventSource("/sse-endpoint");
@@ -49,7 +119,7 @@
     function updateView() {
       console.log("updateView/0");
 
-      window.reload();
+      //window.reload();
 
     }
 
@@ -89,7 +159,6 @@
             throw new Error("Failed to add shift");
           }
           console.log("Shift added successfully");
-          window.location.reload(true);
         })
         .catch(error => {
           console.error("Error adding shift:", error);
@@ -131,7 +200,7 @@
         startTime: startTime,
         endTime: endTime
       };
-      window.location.reload(true);
+      //window.location.reload(true);
       fetch("/shifts/update", {
         method: "POST",
         headers: {
@@ -145,15 +214,13 @@
           }
           console.log("Shift updated successfully");
           window.location.reload(true);
-          window.location.reload(true);
         })
         .catch(error => {
           console.error("Error updating shift:", error);
           // エラーが発生した場合に適切なエラーハンドリングを行う
         });
 
-      window.location.reload(true);
-      window.location.reload(true);
+
     }
 
     function onShiftDelete(employeeID, date) {
@@ -184,11 +251,13 @@
 
     // シフトを追加するポップアップを表示する
     function openAddPopup2() {
-      var employeeName = window.prompt("従業員名を入力してください:");
-      var employeeID = window.prompt("従業員IDを入力してください:");
-      var shiftDate = window.prompt("シフトの日付を入力してください (YYYY-MM-DD):");
-      var startTime = window.prompt("開始時間を入力してください (HH:mm):");
-      var endTime = window.prompt("終了時間を入力してください (HH:mm):");
+      var employeeName = document.getElementById("employeeName").value; // 従業員名を取得
+      var employeeID = document.getElementById("employeeName").options[document.getElementById("employeeName").selectedIndex].getAttribute('value'); // 従業員IDを取得
+      var shiftDate = document.getElementById("shiftDate").value;
+      var startTime = document.getElementById("startTime").value;
+      var endTime = document.getElementById("endTime").value;
+      //var startTime = window.prompt("開始時間を入力してください (HH:mm):");
+      //var endTime = window.prompt("終了時間を入力してください (HH:mm):");
 
       // 入力がキャンセルされた場合は何もしない
       if (!employeeName || !employeeID || !shiftDate || !startTime || !endTime) {
@@ -217,6 +286,7 @@
           }
           console.log("Shift added successfully");
           // 追加が成功した場合、ポップアップを閉じるなどの処理を行う
+          window.location.reload(true);
         })
         .catch(error => {
           console.error("Error adding shift:", error);
@@ -230,26 +300,40 @@
       var startTime = prompt("開始時間を入力してください（HH:mm）", "");
       var endTime = prompt("終了時間を入力してください（HH:mm）", "");
 
-      window.location.reload(true);
+      //window.location.reload(true);
       // 入力がキャンセルされた場合は何もしない
       if (startTime === null || endTime === null) {
         return;
       }
       onShiftChange(employeeID, date, startTime, endTime);
-      window.location.reload(true);
-      window.location.reload(true);
+      // window.location.reload(true);
+      // window.location.reload(true);
     }
 
     function openDeletePopup(employeeID, date) {
-      prompt("削除しますか？", "");
+      if (confirm("削除しますか？")) {
 
-      onShiftDelete(employeeID, date);
+        onShiftDelete(employeeID, date);
+      }
     }
 
     function renderTable(data, dates, employeeData) {
+      //var table = "  <div id=\"log\"></div><div>"
+      scrollToBottom();
       var table = "<div>"
       if (userIsManager) {
-        table += "<button class=\"buttonOutline\" onclick=\"openAddPopup()\">シフトを追加1</button><button class=\"buttonOutline\" onclick=\"openAddPopup2()\">シフトを追加2</button>"
+        var addShiftButton = document.getElementById("addShiftButton");
+        var shiftForm = document.getElementById("shiftForm");
+
+        if (addShiftButton) {
+          addShiftButton.style.display = "block";
+          addShiftButton.addEventListener("click", function () {
+            if (shiftForm) {
+              shiftForm.style.display = "block";
+            }
+          });
+        }
+        //table += "<button class=\"buttonOutline\" onclick=\"openAddPopup2()\">シフトを追加</button>"
       }
       table += "</div>"
       table += "<div class=\"table-container\"><table border='2' class=\"shiftTable\">";
@@ -286,6 +370,7 @@
       return table;
     }
 
+
     document.getElementById("table-container").innerHTML = renderTable(tableData, shiftDates, employees);
     var sse = new EventSource('/asyncUpdate');
     sse.onmessage = function (event) {
@@ -293,24 +378,24 @@
       console.log(event.data);
       if (event.data == 1) {
         window.location.reload(true);
-        document.getElementById("table-container").innerHTML = renderTable(tableData, shiftDates, employees);
+        // document.getElementById("table-container").innerHTML = renderTable(tableData, shiftDates, employees);
+        // var logElement = document.getElementById("log");
+        // logElement.innerHTML += "<p>" + event.data + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" + "</p>";
+        //document.getElementById("table-container").innerHTML = renderTable(tableData, shiftDates, employees);
       }
+      // var logElement = document.getElementById("log");
+      // logElement.innerHTML += "<p>" + event.data + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" + "</p>";
     }
-    function pollForUpdates() {
-      setInterval(function () {
-        // サーバーからデータを取得するリクエストを送信
-        fetch('/optimized')
-          .then(response => response.json())
-          .then(data => {
-            // データを使用してViewを更新
-            document.getElementById("table-container").innerHTML = renderTable(tableData, shiftDates, employees);
-            updateView(data);
-          })
-          .catch(error => {
-            console.error('Error fetching data:', error);
-          });
-      }, 5000);  // 5秒ごとにポーリング
-    }
+
+
+    // クライアント側のJavaScript
+    var eventSource = new EventSource("/log");
+
+    eventSource.onmessage = function (event) {
+      // ログに表示
+      // var logElement = document.getElementById("log");
+      // logElement.innerHTML += "<p>" + event.data + "</p>";
+    };
 
     function updateView(data) {
       // Viewを更新する処理を実装
@@ -320,6 +405,7 @@
 
       document.getElementById("table-container").innerHTML = renderTable(data.tableData, data.shiftDates, data.employees);
       console.log('Received updated data:', data);
+      window.location.reload(true);
     }
 
     // SSE開始

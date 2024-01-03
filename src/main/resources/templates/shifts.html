@@ -9,7 +9,7 @@
 
 <body>
   <a th:href="@{/logout}">ログアウト</a><br>
-  <h1>お疲れさまです <span sec:authentication="name"></span>！！！
+  <h1>お疲れさまです <span sec:authentication="name"></span> さん
   </h1>
 
   <!--シフト希望一覧は店長のみが閲覧可にしたい
@@ -17,7 +17,7 @@
 
   <div>
     <a href="/list">従業員一覧</a>
-    <a href="/requests">シフト希望一覧</a>
+    <a href="/requests">シフト希望入力</a>
     <a href="/optimized">シフト確認</a>
   </div>
 </body>

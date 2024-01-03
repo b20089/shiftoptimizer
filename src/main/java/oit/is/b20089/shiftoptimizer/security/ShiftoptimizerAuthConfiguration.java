@@ -1,9 +1,14 @@
 package oit.is.b20089.shiftoptimizer.security;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.User.UserBuilder;
@@ -15,8 +20,14 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import oit.is.b20089.shiftoptimizer.model.Employee;
+import oit.is.b20089.shiftoptimizer.model.EmployeeMapper;
+import oit.is.b20089.shiftoptimizer.service.EmployeeService;
+
 @EnableWebSecurity
 public class ShiftoptimizerAuthConfiguration {
+  @Autowired
+  EmployeeService employeeService;
 
   /**
    * 認証処理に関する設定（誰がどのようなロールでログインできるか）
@@ -26,67 +37,54 @@ public class ShiftoptimizerAuthConfiguration {
   @Bean
   public InMemoryUserDetailsManager userDetailsService() {
     // このクラスの下部にあるPasswordEncoderを利用して，ユーザのビルダ（ログインするユーザを作成するオブジェクト）を作成する
-    UserBuilder users = User.builder();
+    /* UserBuilder users = User.builder(); */
 
     // UserBuilder usersにユーザ名，パスワード，ロールを指定してbuildする
     // このときパスワードはBCryptでハッシュ化されている．
     // ハッシュ化されたパスワードを得るには，この授業のbashターミナルで下記のように末尾にユーザ名とパスワードを指定すると良い(要VPN)
     // $ sshrun htpasswd -nbBC 10 user1 p@ss
     // ロールを複数追加することもできる
-    UserDetails user1 = users
-        .username("user1")
-        .password("$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e")
-        .roles("USER", "MANAGER")
-        .build();
-    UserDetails user2 = users
-        .username("店長")
-        .password("$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e")
+    InMemoryUserDetailsManager userDetailsManager = new InMemoryUserDetailsManager();
+
+    List<Employee> employees = employeeService.getAllEmployees();
+    for (Employee employee : employees) {
+      UserDetails userDetails = User.withUsername(employee.getName())
+          .password(
+              "$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e") // パスワードは全員同じとのこと
+          .roles("EMPLOYEE")
+          .build();
+      userDetailsManager.createUser(userDetails);
+    }
+
+    // 手動で店長情報を追加
+    UserDetails manager = User.withUsername("店長")
+        .password(
+            "$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e") // パスワードは全員同じとのこと
         .roles("MANAGER")
         .build();
-    UserDetails user3 = users
-        .username("従業員")
-        .password("$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e")
-        .roles("EMPLOYEE")
-        .build();
-    // $ sshrun htpasswd -nbBC 10 customer1 p@ss
-    UserDetails user4 = users
-        .username("user4")
-        .password("$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e")
-        .roles("USER")
-        .build();
-    // $ sshrun htpasswd -nbBC 10 customer2 p@ss
-    UserDetails user5 = users
-        .username("user5")
-        .password("$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e")
-        .roles("USER")
-        .build();
-    // $ sshrun htpasswd -nbBC 10 seller p@ss
-    UserDetails user6 = users
-        .username("user6")
-        .password("$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e")
-        .roles("USER")
-        .build();
-    UserDetails user7 = users
-        .username("user7")
-        .password("$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e")
-        .roles("USER")
-        .build();
-    UserDetails user8 = users
-        .username("user8")
-        .password("$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e")
-        .roles("USER")
-        .build();
-    UserDetails user9 = users
-        .username("user9")
-        .password("$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e")
-        .roles("USER")
-        .build();
-    UserDetails user10 = users
-        .username("user10")
-        .password("$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e")
-        .roles("USER")
-        .build();
-    return new InMemoryUserDetailsManager(user1, user2, user3, user4, user5, user6, user7, user8, user9, user10);
+    userDetailsManager.createUser(manager);
+
+    return userDetailsManager;
+    /*
+     * UserDetails user1 = users
+     * .username("user1")
+     * .password("$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e")
+     * .roles("USER", "MANAGER")
+     * .build();
+     * UserDetails user2 = users
+     * .username("店長")
+     * .password("$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e")
+     * .roles("MANAGER")
+     * .build();
+     * UserDetails user3 = users
+     * .username("従業員")
+     * .password("$2y$10$ngxCDmuVK1TaGchiYQfJ1OAKkd64IH6skGsNw1sLabrTICOHPxC0e")
+     * .roles("EMPLOYEE")
+     * .build();
+     * // $ sshrun htpasswd -nbBC 10 customer1 p@ss
+     * 
+     * return new InMemoryUserDetailsManager(user1, user2, user3);
+     */
   }
 
   /**

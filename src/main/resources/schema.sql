@@ -29,3 +29,9 @@ CREATE TABLE OptimizedShift (
     EndTime TIME,
     FOREIGN KEY (EmployeeID) REFERENCES Employees(EmployeeID)
 );
+
+CREATE TABLE logs (
+    id SERIAL PRIMARY KEY,
+    timestamp TIMESTAMP,
+    message VARCHAR(255) NOT NULL
+);
